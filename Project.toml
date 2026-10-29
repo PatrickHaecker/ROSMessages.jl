@@ -1,0 +1,16 @@
+name = "ROSMessages"
+uuid = "f312b3d1-7f76-41ec-9ce4-5a07ebda4be9"
+authors = ["Patrick Häcker <patrick.haecker@de.bosch.com>"]
+version = "0.1.0"
+
+[workspace]
+projects = ["test"]
+
+[deps]
+EnumX = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
+[compat]
+EnumX = "1"
+julia = "1.13"
+StaticArrays = "1"
