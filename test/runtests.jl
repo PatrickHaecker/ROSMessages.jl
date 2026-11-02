@@ -270,6 +270,9 @@ end
     @test ismutabletype(m.MutableMixed) && fieldtype(m.MutableMixed, :inner) === m.Inner && !ismutabletype(m.Inner)
     @test m.MutableMixed!(y; kind = 2) === y && y.kind == 2
     @test copy!(m.MutableMixed(), y) == y
+    copied = m.MutableMixed()
+    copy!(copied, y)
+    @test @allocated(copy!(copied, y)) == 0
     # Without a Julia name, `importrosmsg` finds the type by its ROS name and mutability.
     @test importrosmsg(m, "rosmessages_test", "msg", "Mixed") === :MutableMixed
 

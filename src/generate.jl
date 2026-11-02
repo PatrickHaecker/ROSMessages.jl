@@ -578,8 +578,9 @@ function typecode(s::ImportContext, t::TypeSpec)
     push!(code, :(Base.:(==)(x::$typename, y::$typename) = ROSMessages.fieldvalues(x) == ROSMessages.fieldvalues(y)))
     push!(code, :(Base.isequal(x::$typename, y::$typename) = isequal(ROSMessages.fieldvalues(x), ROSMessages.fieldvalues(y))))
     push!(code, :(Base.hash(x::$typename, h::UInt) = hash(ROSMessages.fieldvalues(x), hash($(string(name)), h))))
+    # One statement per field, as a loop over field indices boxes each value.
     mutable && push!(code, :(function Base.copy!(dst::$typename, src::$typename)
-        foreach(i -> setfield!(dst, i, getfield(src, i)), 1:fieldcount(typeof(dst)))
+        $((:(setfield!(dst, $(QuoteNode(f.name)), getfield(src, $(QuoteNode(f.name))))) for f in fields)...)
         return dst
     end))
     append!(code, ccode(name, typename, mutable))
