@@ -101,6 +101,31 @@ function split_declaration(ex)
     return ex, type, default
 end
 
+# Return the text of `default` in the `@override` statement at `source`, or `nothing` if the file is unreadable or the text spans several lines.
+# An `Expr` keeps no spelling: `0.0m/s` and `(0.0m)/s` parse to the same `Expr`, which `print` writes as `(0.0m) / s`.
+# No printing rule can restore it: `2pi/3` and `2 * pi / 3` parse to the same `Expr` as well, so any rule changes one of them.
+# Hopefully, the provenance of JuliaLowering, which links each syntax node to its source range, reduces this search to a lookup.
+function spelling(default::Expr, source::LineNumberNode)
+    file = string(source.file)
+    isfile(file) || return nothing
+    statement = ""
+    for line in Iterators.drop(eachline(file), source.line - 1)
+        statement *= line * '\n'
+        isexpr(Meta.parse(statement; raise = false), :incomplete) || break
+    end
+    target = Base.remove_linenums!(copy(default))
+    matches(text) = Base.remove_linenums!(Meta.parse(text; raise = false)) == target
+    for i in findall('=', statement)
+        text = strip(statement[i + 1:end])
+        matches(text) || continue
+        for j in findall('#', text)
+            matches(text[1:prevind(text, j)]) && (text = rstrip(text[1:prevind(text, j)]); break)
+        end
+        return occursin('\n', text) ? nothing : String(text)
+    end
+    return nothing
+end
+
 rosfieldnames(x::Symbol, ::LineNumberNode) = [x]
 function rosfieldnames(x, source::LineNumberNode)
     isexpr(x, :tuple) && length(x.args) >= 2 && all(a -> a isa Symbol, x.args) || throw(syntax_error(source))

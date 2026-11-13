@@ -586,7 +586,7 @@ end
         # Do not edit it: `@importrosmsg` overwrites it whenever the generated content changes.
 
         ROSMessages.@kwdef! mutable struct Vec
-            xy::NTuple{L, Float64} = ntuple((_->1.0), L)
+            xy::NTuple{L, Float64} = ntuple(_ -> 1.0, L)
             z::Float64 = 0.0
         end
         """
@@ -605,7 +605,7 @@ end
     Base.include(m, source)
     @latest
     @test m.Vec().xy == (2.0, 2.0)
-    @test contains(read(file, String), "ntuple((_->2.0), L)")
+    @test contains(read(file, String), "ntuple(_ -> 2.0, L)")
     # Evaluating the import a second time defines nothing, as the types exist.
     Base.include(m, source)
 
@@ -691,6 +691,33 @@ end
     @latest
     @test constant_module.KIND === UInt8(1)
     @test !contains(read(constant_file, String), "KIND =")
+
+    definefile(joinpath(share, "Spelled.msg"), "float64 a\nfloat64 b\nfloat64 c\nfloat64 d\n")
+    spelled_source = joinpath(dir, "spelled_source.jl")
+    spelled_file = joinpath(dir, "gen", "Spelled.jl")
+    write(spelled_source, """
+        const m = 1.0
+        const s = 2.0
+        @importrosmsg rosmessages_test/Spelled in "gen/Spelled.jl" begin
+            @override a = 0.0m/s  # in m/s
+            @override b =
+                2 * pi / 3
+            @override c = length("a#b") * m  # "#" in a string
+            @override d = (1.0 +
+                m)
+        end
+        """)
+    spelled_module = newmodule()
+    Base.include(spelled_module, spelled_source)
+    @latest
+    @test spelled_module.Spelled().c == 3.0
+    @test contains(read(spelled_file, String), """
+            a::Float64 = 0.0m/s
+            b::Float64 = 2 * pi / 3
+            c::Float64 = length("a#b") * m
+            d::Float64 = 1.0 + m
+        end
+        """)
 
     enum_source = joinpath(dir, "enum_source.jl")
     enum_file = joinpath(dir, "gen", "Status.jl")

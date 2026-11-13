@@ -1,7 +1,7 @@
 name = "ROSMessages"
 uuid = "f312b3d1-7f76-41ec-9ce4-5a07ebda4be9"
 authors = ["Patrick Häcker <patrick.haecker@de.bosch.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [workspace]
 projects = ["test"]
